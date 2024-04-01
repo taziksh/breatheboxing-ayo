@@ -1,2 +1,41 @@
-main {
+@font-face {
+  font-family: 'EB Garamond';
+  src: local('EB Garamond'), /* Optional: Attempt to use local version first */
+       url('../public/EBGaramond12-Regular.otf') format('opentype'); 
+  font-style: normal;
+  font-weight: 400;
+}
+
+@keyframes slowExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.75) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slowContract {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(0.75);
+  }
+}
+
+.textExpand {
+  animation: slowExpand 4s ease-out forwards;
+  font-family: 'EB Garamond', serif; /* Using the custom font you mentioned */
+  font-size: 36px; /* Or any size you prefer */
+}
+
+.textContract {
+  animation: slowContract 4s ease-out forwards;
+  font-family: 'EB Garamond', serif; /* Using the custom font you mentioned */
+  font-size: 36px; /* Or any size you prefer */
 }

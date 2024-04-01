@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSpring, animated } from "react-spring";
 import { Sampler } from "tone";
 import A1 from "../meditation2min.mp3";
+import "./App.css";
 
 export const Player = ({ play }) => {
   const sampler = useRef(null);
@@ -20,11 +21,8 @@ export const Player = ({ play }) => {
       if (!sampler.current.isPlaying) {
         sampler.current.triggerAttack("A1");
       }
-      // volume.current.fadeIn(0.5); // Fade in over 0.5 seconds
     } else {
-      // const fadeOutTime = 0.5;
-      // volume.current.fadeOut(0.5); // Fade out over 0.5 seconds
-      setTimeout(() => sampler.current.triggerRelease(), 0); // Ensure timeout matches the fade out duration
+      setTimeout(() => sampler.current.triggerRelease(), 0);
     }
   }, [play]);
 
@@ -34,38 +32,60 @@ export const Player = ({ play }) => {
 const BoxBreathingCircle = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [playAudio, setPlayAudio] = useState(false);
+  const [breathingPhase, setBreathingPhase] = useState("inhaling");
+  const [textOpacity, setTextOpacity] = useState(1);
   const circleRef = useRef();
+  const textRef = useRef();
 
-  // Animation for the circle's radius
   const { radius } = useSpring({
-    radius: isHovered ? 100 : 50, // Full size and start size
+    radius: isHovered ? 100 : 50,
     from: { radius: 50 },
     config: { duration: 4000 },
     loop: { reverse: true },
+    onRest: () =>
+      setBreathingPhase((prevPhase) =>
+        prevPhase === "inhaling" ? "exhaling" : "inhaling",
+      ),
   });
 
-  // New: Spring animation for the circle's position
   const [{ x, y }, setPosition] = useSpring(() => ({ x: 0, y: 0 }));
 
-  // Event handlers
   const handleMouseEnter = () => setIsHovered(true);
   const handleMouseLeave = () => setIsHovered(false);
 
-  // Update position based on cursor movement, with a delay
   const handleMouseMove = (event) => {
     setPosition.start({
-      x: event.clientX - 100, // Centering the circle based on its size
+      x: event.clientX - 100,
       y: event.clientY - 100,
       immediate: false,
-      config: { duration: 500 }, // This creates the lag effect
+      config: { duration: 500 },
     });
 
     const { clientX, clientY } = event;
-    const { x, y } = getCircleCenter();
-    const distance = Math.sqrt((x - clientX) ** 2 + (y - clientY) ** 2);
-    const isInvisibleCircleRadius = 300; //
+    const circleCenter = getCircleCenter();
+    const distance = Math.sqrt(
+      (circleCenter.x - clientX) ** 2 + (circleCenter.y - clientY) ** 2,
+    );
+    const isInvisibleCircleRadius = 300;
 
     setPlayAudio(distance <= isInvisibleCircleRadius);
+
+    if (textRef.current) {
+      // Calculate the distance between the mouse and the text element's center
+      const textRect = textRef.current.getBoundingClientRect();
+      const textCenterX = textRect.left + textRect.width / 2;
+      const textCenterY = textRect.top + textRect.height / 2;
+      const distance = Math.sqrt(
+        (textCenterX - event.clientX) ** 2 + (textCenterY - event.clientY) ** 2,
+      );
+
+      // Adjust the opacity based on the distance
+      const maxDistance = 5; // Max distance for effect
+      const opacity = Math.min(1, Math.max(0, 1 - distance / maxDistance));
+
+      // Update the opacity using React state
+      setTextOpacity(opacity);
+    }
   };
 
   const getCircleCenter = () => {
@@ -74,7 +94,6 @@ const BoxBreathingCircle = () => {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   };
 
-  // Bind event listeners
   useEffect(() => {
     const circle = circleRef.current;
     if (circle) {
@@ -95,6 +114,23 @@ const BoxBreathingCircle = () => {
 
   return (
     <>
+      <div
+        ref={textRef}
+        className={breathingPhase == "inhaling" ? "textExpand" : "textContract"}
+        style={{
+          position: "fixed",
+          top: "10%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: -1, // Ensure the text is behind the circle
+          opacity: textOpacity, // Default opacity
+          transition: "opacity 0.5s ease", // Smooth transition for opacity change
+          fontSize: "64px", // Increase the font size as needed
+          fontFamily: "'EB Garamond', serif", // Use a serif font
+        }}
+      >
+        {breathingPhase === "inhaling" ? "Breathe in" : "Breathe out"}
+      </div>
       <animated.div
         style={{
           width: "200px",
@@ -106,7 +142,7 @@ const BoxBreathingCircle = () => {
           justifyContent: "center",
           margin: "20px auto",
           position: "fixed",
-          x, // Directly apply the animated values
+          x,
           y,
           willChange: "x, y",
         }}
