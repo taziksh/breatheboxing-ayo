@@ -4,6 +4,12 @@ import { Sampler } from "tone";
 import A1 from "../meditation2min.mp3";
 import "./App.css";
 
+const Wisp = ({ top, left }) => {
+    return (
+        <div className="wisp" style={{ top, left }}></div>
+    );
+};
+
 export const Player = ({ play }) => {
   const sampler = useRef(null);
 
@@ -37,16 +43,37 @@ const BoxBreathingCircle = () => {
   const circleRef = useRef();
   const textRef = useRef();
 
+  const [textPosition, setTextPosition] = useSpring(() => ({
+    left: '50%', 
+    top: '50%',
+    config: { tension: 280, friction: 60 }
+  }));
+
+  //TODO: enable wisps
+  const wispCoords = [
+      // { top: '20%', left: '30%' },
+      // { top: '50%', left: '70%' },
+      // { top: '80%', left: '10%' },
+  ];
+
   const { radius } = useSpring({
     radius: isHovered ? 100 : 50,
     from: { radius: 50 },
     config: { duration: 4000 },
     loop: { reverse: true },
-    onRest: () =>
-      setBreathingPhase((prevPhase) =>
-        prevPhase === "inhaling" ? "exhaling" : "inhaling",
-      ),
+    onRest: () => {
+      const nextPhase = breathingPhase === "inhaling" ? "exhaling" : "inhaling";
+      setBreathingPhase(nextPhase);
+
+      // Update text position on phase change
+      setTextPosition.start({
+        left: `${10 + Math.random() * 80}%`,
+        top: `${10 + Math.random() * 80}%`,
+        config: { mass: 0.5, tension: 170, friction: 100 } 
+      });
+    },
   });
+
 
   const [{ x, y }, setPosition] = useSpring(() => ({ x: 0, y: 0 }));
 
@@ -79,11 +106,10 @@ const BoxBreathingCircle = () => {
         (textCenterX - event.clientX) ** 2 + (textCenterY - event.clientY) ** 2,
       );
 
-      // Adjust the opacity based on the distance
-      const maxDistance = 5; // Max distance for effect
+      // Adjust opacity based on the distance
+      const maxDistance = 5;
       const opacity = Math.min(1, Math.max(0, 1 - distance / maxDistance));
 
-      // Update the opacity using React state
       setTextOpacity(opacity);
     }
   };
@@ -114,7 +140,12 @@ const BoxBreathingCircle = () => {
 
   return (
     <>
-      <div
+      <div>
+          {wispCoords.map((position, index) => (
+              <Wisp key={index} top={position.top} left={position.left} />
+          ))}
+      </div>
+      <animated.div
         ref={textRef}
         className={breathingPhase == "inhaling" ? "textExpand" : "textContract"}
         style={{
@@ -122,15 +153,16 @@ const BoxBreathingCircle = () => {
           top: "10%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          zIndex: -1, // Ensure the text is behind the circle
-          opacity: textOpacity, // Default opacity
-          transition: "opacity 0.5s ease", // Smooth transition for opacity change
-          fontSize: "64px", // Increase the font size as needed
-          fontFamily: "'EB Garamond', serif", // Use a serif font
+          zIndex: -1, // Ensure text is behind the circle
+          opacity: textOpacity, 
+          transition: "opacity 0.5s ease",
+          fontSize: "64px",
+          fontFamily: "'EB Garamond', serif", 
+          ...textPosition
         }}
       >
         {breathingPhase === "inhaling" ? "Breathe in" : "Breathe out"}
-      </div>
+      </animated.div>
       <animated.div
         style={{
           width: "200px",
