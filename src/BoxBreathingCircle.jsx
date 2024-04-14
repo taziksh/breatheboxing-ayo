@@ -4,10 +4,23 @@ import { Sampler } from "tone";
 import A1 from "../meditation2min.mp3";
 import "./App.css";
 
+//TODO: falling sakura petals animation https://codepen.io/nicecue/pen/gOpppqE
+
 const Wisp = ({ top, left }) => {
     return (
         <div className="wisp" style={{ top, left }}></div>
     );
+};
+
+// Credits: https://discourse.webflow.com/t/add-falling-confetti-with-css/103687/2
+const Confetti = () => {
+  return (
+    <div className="container">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <div key={index} className={`confetti`}></div>
+      ))}
+    </div>
+  );
 };
 
 export const Player = ({ play }) => {
@@ -34,6 +47,7 @@ export const Player = ({ play }) => {
 
   return null;
 };
+
 
 const BoxBreathingCircle = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -140,6 +154,9 @@ const BoxBreathingCircle = () => {
 
   return (
     <>
+      <div>
+        <Confetti />
+      </div>
       <div>
           {wispCoords.map((position, index) => (
               <Wisp key={index} top={position.top} left={position.left} />
